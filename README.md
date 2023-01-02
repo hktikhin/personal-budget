@@ -19,6 +19,7 @@ npm run start
 - `/api/envelopes`
   - GET /api/envelopes :: to get an array of all envelopes.
   - POST /api/envelopes :: to create a new envelope and save it into array
+
     Expected body format:
     ```
     {
@@ -27,6 +28,7 @@ npm run start
     }
     ```
   - POST /api/envelopes/extract/:envelopeID :: to extract money from an envelope
+
     Expected body format:
     ```
     {
@@ -34,6 +36,7 @@ npm run start
     }
     ```
   - POST /api/envelopes/transfer/:fromEnvelopeID/:toEnvelopeID:: to trasfer money from an envelope to another one
+
     Expected body format:
     ```
     {
@@ -42,6 +45,7 @@ npm run start
     ```
   - GET /api/envelopes/:envelopeID to get a single envelope by id.
   - PUT /api/envelopes/:envelopeID to update a single envelope by id.
+  
     Expected body format:
     ```
     {   
