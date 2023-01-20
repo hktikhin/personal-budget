@@ -1,6 +1,8 @@
 const express = require("express");
 const envelopeRouter = express.Router();
 
+const db = require("../db");
+
 // array to store envelope object 
 const envelopes = [
     {
@@ -16,18 +18,7 @@ const envelopes = [
 ];
 
 // Helper function
-const assignId = (requestEnvelope) => {
-    /*
-     Assign id helper function 
-    */
-    const {id : maxEnvelopeId} = envelopes.reduce(
-        (accumulator, currentValue) => (currentValue.id > accumulator.id) ? currentValue : accumulator
-    );
-    requestEnvelope.id = maxEnvelopeId + 1
-    return requestEnvelope
-};
-
-const validateIdx = (id) => {
+const validateId = async (id) => {
     /*
     Helper function to validate envelopID
     params:
@@ -47,47 +38,23 @@ const validateIdx = (id) => {
         invalidIdError.status = 400;
         throw invalidIdError;
     }
-    const envelopeIdx = envelopes.findIndex((envelope) => {
-        return envelope.id === envelopeID;
-    });
-    const envelope = envelopes[envelopeIdx];
+    
+    const {rows} = await db.query(`
+        SELECT *
+        FROM envelope
+        WHERE id = $1
+        ;
+    `, [envelopeID]);
+
+    const envelope = rows[0];
+
     if (! envelope) {
         notFoundError = new Error("Envelope not found.");
         notFoundError.status = 404;
         throw notFoundError;  
     }
-    return [envelopeID, envelopeIdx, envelope]
-}
-
-
-const validateTransaction = (amount, budget) => {
-    /*
-    Helper function to validate transactionAmount
-    params:
-        - amount : transactionAmount; can be string
-        - budget: budget of certain envelope
-    return:
-        - transactionAmount
-    Hints:
-        - obj instanceof constructor
-        - throw error 
-
-    */
-    let invalidAmountError;
-    const transactionAmount = Number(amount);
-    if (!transactionAmount || transactionAmount <= 0) {
-        invalidAmountError = new Error("Transaction Amount must be a postive number.");
-        invalidAmountError.status = 400;
-        throw invalidAmountError;
-    }
-
-    if (transactionAmount > budget) {
-        invalidAmountError = new Error("Not enough money in the envelope.");
-        invalidAmountError.status = 400;
-        throw invalidAmountError;
-    }
-
-    return transactionAmount;
+    
+    return [envelopeID, envelope];
 }
 
 // Middleware
@@ -125,58 +92,12 @@ const isValidEnvelope = (req, res, next) => {
     next();
 };
 
-const extractMoney = (req, res, next) => {
-    /* 
-    Middleware to extract money
-
-    Expected body format:
-    {
-        "transactionAmount": 100
-    }
-    */
-
-    // check for valid input given 
-    try {
-        const transactionAmount = validateTransaction(
-            req.body.transactionAmount, req.envelope.budget
-        )
-        req.envelope.budget -= transactionAmount;
-        next();
-    } catch (err) {
-        next(err)
-    }
-};
-
-const transferMoney = (req, res, next) => {
-    /* 
-    Middleware to transfer money from one envelope to another
-
-    Expected body format:
-    {
-        "transactionAmount": 100
-    }
-    */
-    try {
-        // check for valid input given 
-        const transactionAmount = validateTransaction(
-            req.body.transactionAmount, req.fromEnvelope.budget
-        )
-        // Update budget
-        req.fromEnvelope.budget -= transactionAmount;
-        req.toEnvelope.budget += transactionAmount;
-        next();
-    } catch (err) {
-        next(err)
-    }
-};
-
 // handle parameters
-envelopeRouter.param("envelopeID", (req, res, next, id) => {
+envelopeRouter.param("envelopeID", async (req, res, next, id) => {
     // check for valid id 
     try {
-        const [envelopeID, envelopeIdx, envelope] = validateIdx(id);
+        const [envelopeID, envelope] = await validateId(id);
         req.envelopeID = envelopeID;
-        req.envelopeIdx = envelopeIdx
         req.envelope = envelope;
         next();
     } catch (err) {
@@ -187,71 +108,94 @@ envelopeRouter.param("envelopeID", (req, res, next, id) => {
 envelopeRouter.param("from", (req, res, next, id) => {
     // check for valid id 
     try {
-        const [envelopeID, envelopeIdx, envelope] = validateIdx(id);
+        const [envelopeID, envelope] = validateId(id);
         req.fromEnvelopeID = envelopeID;
-        req.fromEnvelopeIdx = envelopeIdx
         req.fromEnvelope = envelope;
         next();
     } catch (err) {
-        next(err)
+        next(err);
     }
 });
 
 envelopeRouter.param("to", (req, res, next, id) => {
     // check for valid id 
     try {
-        const [envelopeID, envelopeIdx, envelope] = validateIdx(id);
+        const [envelopeID, envelope] = validateId(id);
         req.toEnvelopeID = envelopeID;
-        req.toEnvelopeIdx = envelopeIdx
         req.toEnvelope = envelope;
         next();
     } catch (err) {
-        next(err)
+        next(err);
     }
 });
 
 // Handle route 
 // Get all 
-envelopeRouter.get("/", (req, res, next) => {
-    res.send(envelopes);
+envelopeRouter.get("/", async (req, res, next) => {
+    try {
+        const {rows} = await db.query(`
+            SELECT *
+            FROM envelope
+            ORDER BY id ASC;
+        `);
+        res.send(rows);
+    } catch (err) {
+        next(err);
+    }
 });
 
 // Get by id 
-envelopeRouter.get("/:envelopeID", (req, res, next) => {
+envelopeRouter.get("/:envelopeID", async (req, res, next) => {
     res.send(req.envelope);
 });
 
 // Add envelope 
-envelopeRouter.post("/", isValidEnvelope, (req, res, next) => {
-    const newEnvelope = assignId(req.newEnvelope);
-    envelopes.push(newEnvelope);
-    res.status(201).send(envelopes[envelopes.length-1]);
-});
-
-
-// Extract money from envelope
-envelopeRouter.post("/extract/:envelopeID", extractMoney, (req, res, next) => {
-    res.status(200).send(req.envelope);
-});
-
-// Transfer from one to envelope to another 
-envelopeRouter.post("/transfer/:from/:to", transferMoney, (req, res, next) => {
-    res.status(200).send({
-        from: req.fromEnvelope,
-        to: req.toEnvelope
-    });
+envelopeRouter.post("/", isValidEnvelope, async (req, res, next) => {
+    try {
+        const newEnvelope = req.newEnvelope;
+        const {rows} = await db.query(`
+            INSERT INTO envelope (title, budget)
+            VALUES ($1, $2)
+            RETURNING *
+            ;
+        `, [newEnvelope.title, newEnvelope.budget]);
+        res.status(201).send(rows[0]);
+    } catch (err) {
+        next(err);
+    }
+    
 });
 
 // Update envelope 
-envelopeRouter.put("/:envelopeID", isValidEnvelope, (req, res, next) => {
-    envelopes[req.envelopeIdx] = req.newEnvelope;
-    res.send(envelopes[req.envelopeIdx]);
+envelopeRouter.put("/:envelopeID", isValidEnvelope, async (req, res, next) => {
+    const newEnvelope = req.newEnvelope;
+    try {
+        const {rows} = await db.query(`
+            UPDATE envelope 
+            SET title = $2, budget = $3
+            WHERE id = $1
+            RETURNING *
+            ;
+        `, [req.envelopeID, newEnvelope.title, newEnvelope.budget]);
+        res.send(rows[0]);
+    } catch (err) {
+        next(err);
+    }
 });
 
 // Delete
-envelopeRouter.delete("/:envelopeID", (req, res, next) => {
-    envelopes.splice(req.envelopeIdx, 1);
-    res.status(204).send();
+envelopeRouter.delete("/:envelopeID", async (req, res, next) => {
+    try {
+        await db.query(`
+            DELETE FROM envelope 
+            WHERE id = $1
+            ;
+        `, [req.envelopeID]);
+        res.status(204).send();
+    } catch (err) {
+        next(err);
+    }
+
 });
 
-module.exports = envelopeRouter;
+module.exports = {envelopeRouter, validateId};

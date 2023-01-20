@@ -10,48 +10,28 @@ Before running this project, you need to install the following software:
 - npm 
 - Dependencies by using ```npm install``` command
 
+You may also need to install [PostgreSQL](https://www.postgresql.org/download/) and create tables using the 
+command from `sql-statement/create-table.sql`. 
+
+As for the database connection, you need to create a `.env` file on root folder and provide the following infomation:
+
+```
+PGUSER="youruser" 
+PGHOST="yourhost"
+PGPASSWORD="yourpassword" 
+PGDATABASE="yourdatabase"
+PGPORT=5432 
+```
+
 Then, you can run this project using the following command.
 ```
 npm run start
 ```
 
 ## API Endpoint 
-- `/api/envelopes`
-  - GET /api/envelopes :: to get an array of all envelopes.
-  - POST /api/envelopes :: to create a new envelope and save it into array
 
-    Expected body format:
-    ```
-    {
-        "title": string,
-        "budget": number,
-    }
-    ```
-  - POST /api/envelopes/extract/:envelopeID :: to extract money from an envelope
+I use [swagger-ui-express](https://www.npmjs.com/package/swagger-ui-express) to host the documentation of the API. 
 
-    Expected body format:
-    ```
-    {
-        "transactionAmount": number
-    }
-    ```
-  - POST /api/envelopes/transfer/:fromEnvelopeID/:toEnvelopeID:: to trasfer money from an envelope to another one
+You can go to `localhost:3000/docs` to view the documentation after running the app.
 
-    Expected body format:
-    ```
-    {
-        "transactionAmount": number
-    }
-    ```
-  - GET /api/envelopes/:envelopeID to get a single envelope by id.
-  - PUT /api/envelopes/:envelopeID to update a single envelope by id.
-  
-    Expected body format:
-    ```
-    {   
-        "id": number,
-        "title": string,
-        "budget": number,
-    }
-    ```
-  - DELETE /api/envelopes/:envelopeID to delete a single envelope by id.
+

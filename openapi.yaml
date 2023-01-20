@@ -1,0 +1,342 @@
+openapi: 3.0.3
+info:
+  title: Personal budget management
+  version: 1.0.0
+  description: >-
+    The purpose of this project is to build an API that allow user to create and
+    manage a personal budget with Envelope Budgeting principles.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io
+servers:
+  - url: /
+    variables: {}
+    description: >-
+      Home page for the application. You may need to set up the database in
+      order to use the application.
+paths:
+  /envelopes:
+    get:
+      summary: Get all envelopes
+      description: >-
+        Get all envelopes record. It should record how many budget you give for
+        each area of life.
+      operationId: ''
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              examples:
+                All envelopes:
+                  value: |-
+                    [
+                        {
+                            "id": 1,
+                            "title": "Food",
+                            "budget": 1900
+                        },
+                        {
+                            "id": 2,
+                            "title": "Game",
+                            "budget": 500
+                        },
+                        {
+                            "id": 3,
+                            "title": "Travel",
+                            "budget": 3100
+                        },
+                        {
+                            "id": 8,
+                            "title": "Anime",
+                            "budget": 200
+                        }
+                    ]
+        default:
+          description: Default error sample response
+      tags:
+        - Envelopes
+    post:
+      summary: Create a new envelope
+      description: Create a new envelope , and store it in database.
+      operationId: ''
+      requestBody:
+        description: Expected envelope body 
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Envelope'
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              examples:
+                Create success:
+                  value: |-
+                    {
+                        "id": 11,
+                        "title": "Family",
+                        "budget": 200
+                    }
+        default:
+          description: Default error sample response
+      tags:
+        - Envelopes
+  /envelopes/{id}:
+    get:
+      summary: Get a specificenvelope by id
+      description: 'Get a specific envelope by id. '
+      operationId: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Envelope id for user to get
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              examples:
+                'get success ':
+                  value: |-
+                    {
+                        "id": 1,
+                        "title": "Food",
+                        "budget": 1900
+                    }
+        default:
+          description: Default error sample response
+      tags:
+        - Envelopes
+    delete:
+      summary: 'Remove envelope by id '
+      description: Remove envelope by id from database
+      operationId: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Envelope id for user to get
+      responses:
+        '204':
+          description: Deletion succeed
+        default:
+          description: Default error sample response
+      tags:
+        - Envelopes
+    put:
+      summary: Update a specific envelope
+      description: 'Update a specific envelope in database '
+      operationId: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Envelope id for user to get
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              examples:
+                Update succeed:
+                  value: |-
+                    {
+                        "id": 3,
+                        "title": "Travel",
+                        "budget": 1500
+                    }
+        default:
+          description: Default error sample response
+      tags:
+        - Envelopes
+  /transactions:
+    get:
+      summary: Get all transactions
+      description: >-
+        Get all transactions from the database. Transactions record the usage of
+        your budget.
+      operationId: ''
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              examples:
+                get all transactions:
+                  value: |-
+                    [
+                        {
+                            "id": 15,
+                            "title": "Give more budget on family from travling.",
+                            "from_envelope": 3,
+                            "to_envelope": 11,
+                            "amount": 1000,
+                            "created_at": "2023-01-20T06:50:34.309Z"
+                        }
+                    ]
+        default:
+          description: Default error sample response
+      tags:
+        - Transactions
+    post:
+      summary: Create new transaction.
+      description: >-
+        Create a new transaction record in database so that you can move money
+        from one envelope to another one.
+      operationId: ''
+      requestBody:
+        description: Expected transaction body 
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transaction'
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              examples:
+                'add new transaction ':
+                  value: |-
+                    {
+                        "id": 15,
+                        "title": "Give more budget on  from family.",
+                        "from_envelope": 3,
+                        "to_envelope": 11,
+                        "amount": 1000,
+                        "created_at": "2023-01-20T06:50:34.309Z"
+                    }
+        default:
+          description: Default error sample response
+      tags:
+        - Transactions
+  /transactions/{id}:
+    get:
+      summary: 'Get a specific transaction '
+      description: Get a specific transaction from database
+      operationId: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Transaction id for user to get
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              examples:
+                get a transaction:
+                  value: |-
+                    {
+                        "id": 15,
+                        "title": "Give more budget on family from travling.",
+                        "from_envelope": 3,
+                        "to_envelope": 11,
+                        "amount": 1000,
+                        "created_at": "2023-01-20T06:50:34.309Z"
+                    }
+        default:
+          description: Default error sample response
+      tags:
+        - Transactions
+    delete:
+      summary: Remove the specific transactions.
+      description: Remove the specific transactions and rollback the action.
+      operationId: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Transaction id for user to get
+      responses:
+        '204':
+          description: Deletion succeed
+        default:
+          description: Default error sample response
+      tags:
+        - Transactions
+    put:
+      summary: 'Update a specific transaction '
+      description: Update a specific transaction in database.
+      operationId: ''
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Transaction id for user to get
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              examples:
+                Update transaction:
+                  value: |-
+                    {
+                        "id": 15,
+                        "title": "Give more budget on family from travling.",
+                        "from_envelope": 3,
+                        "to_envelope": 11,
+                        "amount": 1000,
+                        "created_at": "2023-01-20T06:50:34.309Z"
+                    }
+        default:
+          description: Default error sample response
+      tags:
+        - Transactions
+components:
+  schemas:
+    Envelope:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 25
+        budget:
+          type: integer
+          minimum: 0
+      required: [title, budget]
+      example:
+        title: Family
+        budget: 200
+          
+    Transaction:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 50
+        from_envelope:
+          type: integer
+        to_envelope:
+          type: integer
+        amount:
+          type: integer
+          minimum: 0
+      required: [title, from_envelope, amount]
+      example:
+        title: Give more budget on travling from family."
+        from_envelope: 3
+        to_envelope: 11
+        amount: 200

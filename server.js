@@ -2,6 +2,13 @@
 const express = require("express");
 const bodyParser = require('body-parser')
 const cors = require("cors")
+// Use these dependecy to generate swagger docs
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yamljs');
+const swaggerDocument = YAML.load('./openapi.yaml');
+
+// load environment variable
+require('dotenv').config()
 
 // app 
 const app = express();
@@ -9,6 +16,9 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware for cors
 app.use(cors())
+
+// Api docs
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Middleware for parsing request body 
 app.use(bodyParser.json())
